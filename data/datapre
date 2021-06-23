@@ -1,0 +1,168 @@
+from math import *
+import pandas as pd
+import numpy as np
+
+CSV_FILE_PATH = 'order-2.csv'
+data_location = df_standard = pd.read_csv(CSV_FILE_PATH)
+print(data_location)
+
+lat1 = data_location['start_lat']
+lat2 = data_location['end_lat']
+lat3 = data_location['st_grid_center_lat']
+lat4 = data_location['en_grid_center_lat']
+
+lng1 = data_location['start_lng']
+lng2 = data_location['end_lng']
+lng3 = data_location['st_grid_center_lng']
+lng4 = data_location['en_grid_center_lng']
+
+lat1 = np.array(lat1)
+lat2 = np.array(lat2)
+lat3 = np.array(lat3)
+lat4 = np.array(lat4)
+
+lng1 = np.array(lng1)
+lng2 = np.array(lng2)
+lng3 = np.array(lng3)
+lng4 = np.array(lng4)
+
+x1 = ((lat1-lat2)**2+(lng1-lng2)**2)**0.5
+print(np.mean(x1))
+
+
+def calcDistance(Lat_A, Lng_A, Lat_B, Lng_B):
+     ra = 6378.140  # 赤道半径 (km)
+     rb = 6356.755  # 极半径 (km)
+     flatten = (ra - rb) / ra  # 地球扁率
+     rad_lat_A = radians(Lat_A)
+     rad_lng_A = radians(Lng_A)
+     rad_lat_B = radians(Lat_B)
+     rad_lng_B = radians(Lng_B)
+     pA = atan(rb / ra * tan(rad_lat_A))
+     pB = atan(rb / ra * tan(rad_lat_B))
+     xx = acos(sin(pA) * sin(pB) + cos(pA) * cos(pB) * cos(rad_lng_A - rad_lng_B))
+     c1 = (sin(xx) - xx) * (sin(pA) + sin(pB)) ** 2 / cos(xx / 2) ** 2
+     c2 = (sin(xx) + xx) * (sin(pA) - sin(pB)) ** 2 / sin(xx / 2) ** 2
+     dr = flatten / 8 * (c1 - c2)
+     distance = ra * (xx + dr)
+     return distance
+
+s_grid = data_location['start_grid']
+e_grid = data_location['end_grid']
+
+grid_data = pd.concat([s_grid,e_grid],axis=0,ignore_index=True)
+
+print(grid_data)
+grid_data.drop_duplicates(keep='first',inplace=True)
+print(grid_data)
+length1 = []
+length2 = []
+i = 7388
+print(lat1[i],lng1[i],lat2[i],lng2[i])
+print(calcDistance(lat1[i],lng1[i],lat2[i],lng2[i]))
+for i in range(len(lat1)):
+    length1.append(calcDistance(lat1[i],lng1[i],lat2[i],lng2[i]))
+#     length2.append(calcDistance(lat3[i],lng3[i],lat4[i],lng4[i]))
+length1 = np.array(length1)
+print(np.mean(length1))
+# length2 = np.array(length2)
+
+CSV_FILE_PATH = 'luchenbei_driver_fence (intelligence_da.luchenbei_driver_fence) (intelligence_da).csv'
+data_driver = pd.read_csv(CSV_FILE_PATH)
+print(data_driver)
+
+grid1 = data_driver['real_grid']
+
+
+print(grid1)
+grid1.drop_duplicates(keep='first',inplace=True)
+print(grid1)
+
+whole_grid_data = pd.concat([grid_data,grid1],axis=0,ignore_index=True)
+print(whole_grid_data)
+whole_grid_data.drop_duplicates(keep='first',inplace=True)
+print(whole_grid_data)
+
+whole_grid_data = whole_grid_data.sort_values()
+whole_grid_data.reset_index(drop=True, inplace=True)
+
+
+
+print(whole_grid_data)
+
+start_grids = np.array(data_location['start_grid'])
+end_grids = np.array(data_location['end_grid'])
+print(start_grids)
+s_grid_id = []
+e_grid_id = []
+for i in range(len(start_grids)):
+    data = start_grids[i]
+    data_e = end_grids[i]
+    s_grid_id.append(whole_grid_data[(whole_grid_data==data)].index.tolist())
+    e_grid_id.append(whole_grid_data[(whole_grid_data==data_e)].index.tolist())
+# print(s_grid_id)
+# print(data_driver)
+# print(whole_grid_data)
+
+print(whole_grid_data[(whole_grid_data=='OL13F1i6487j2867')].index.tolist())
+print(len(s_grid_id))
+s_grid_id = np.array(s_grid_id).reshape(-1)
+print(s_grid_id)
+e_grid_id = np.array(e_grid_id).reshape(-1)
+print(e_grid_id)
+
+d_grid_id = []
+for i in range(len(data_driver['real_grid'])):
+    data = data_driver['real_grid'][i]
+    d_grid_id.append(whole_grid_data[(whole_grid_data==data)].index.tolist())
+
+# d_grid_id = np.array(d_grid_id).reshape(-1)
+# print(d_grid_id)
+pd_s_grid_id = pd.DataFrame(s_grid_id)
+pd_e_grid_id = pd.DataFrame(e_grid_id)
+pd_d_grid_id = pd.DataFrame(d_grid_id)
+data_location['start_grid_id'] = pd_s_grid_id
+data_location['end_grid_id'] = pd_e_grid_id
+data_driver['real_grid_id'] = pd_d_grid_id
+
+print(data_location)
+
+print(data_driver)
+
+print(data_driver)
+lat_mat = np.zeros(500)
+lng_mat = np.zeros(500)
+
+start_grids_id = np.array(data_location['start_grid_id'])
+end_grids_id = np.array(data_location['end_grid_id'])
+for i in range(len(start_grids)):
+    data = start_grids_id[i]
+    data_e = end_grids_id[i]
+    lat_mat[data] = data_location['st_grid_center_lat'][i]
+    lat_mat[data_e] = data_location['en_grid_center_lat'][i]
+    lng_mat[data] = data_location['st_grid_center_lng'][i]
+    lng_mat[data_e] = data_location['en_grid_center_lng'][i]
+
+for i in range(len(data_driver['real_grid_id'])):
+    data = data_driver['real_grid_id'][i]
+    lat_mat[data] = data_driver['grid_center_lat'][i]
+    lng_mat[data] = data_driver['grid_center_lng'][i]
+
+print(lat_mat)
+
+length_mat = np.zeros((432,432))
+for i in range(432):
+    for j in range(432):
+        if(lat_mat[i]==lat_mat[j] and lng_mat[i]==lng_mat[j]):
+            length_mat[i,j] = 1.0
+        else:
+            length_mat[i,j] = calcDistance(lat_mat[i], lng_mat[i], lat_mat[j], lng_mat[j])
+
+np.savetxt("area_distance.csv", length_mat, delimiter=',')
+
+print(data_location)
+print(data_driver)
+data_location.rename(columns={'arrive_time':'end_time','start_grid_id':'sid','end_grid_id':'eid','start_lng':'real_start_lng','start_lat':'real_start_lat',
+                             'end_lng':'real_end_lng','end_lat':'real_end_lat','st_grid_center_lng':'are_start_lng','st_grid_center_lat':'area_start_lat',
+                             'en_grid_center_lng':'area_end_lng','en_grid_center_lat':'area_end_lat'}, inplace = True)
+data_driver.rename(columns={'rid':'real_grid_id','grid_center_lat':'area_lat','grid_center_lng':'area_lng'}, inplace = True)
